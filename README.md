@@ -1,5 +1,6 @@
 # single-sign-on-v2
 Be based on Apereo(Jasig) cas 4.2+, the project can return sso client's login page or json (some sso clients' theme may be different with others, or some sso clients is C/S mode need return json by sso server), by setting the login url on sso client.
+
 (this version is 2.0. you can visit url https://github.com/liyingqiao121727/single-sign-on-v1 for 1.0 version. the new version support the web-server cluster mode by override some code of spring-webflow)
 
 Steps: 
