@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Licensed to Jasig under one or more contributor license agreements. 
+	See the NOTICE file distributed with this work for additional information 
+	regarding copyright ownership. Jasig licenses this file to you under the 
+	Apache License, Version 2.0 (the "License"); you may not use this file except 
+	in compliance with the License. You may obtain a copy of the License at the 
+	following location: http://www.apache.org/licenses/LICENSE-2.0 Unless required 
+	by applicable law or agreed to in writing, software distributed under the 
+	License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS 
+	OF ANY KIND, either express or implied. See the License for the specific 
+	language governing permissions and limitations under the License. -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+
+	<description>
+		Jedis initialization. you need to config redis cluster first.
+	</description>
+
+	<bean id="jedisGenericObjectPoolConfig"
+		class="org.apache.commons.pool2.impl.GenericObjectPoolConfig">
+		<property name="maxWaitMillis" value="-1" />
+		<property name="maxTotal" value="1000" />
+		<property name="minIdle" value="8" />
+		<property name="maxIdle" value="100" />
+		<property name="testOnBorrow" value="true" />
+	</bean>
+	
+	<!-- <bean class="liyingqiao.tomcat.redis.RedisManagement">
+		<constructor-arg name="poolConfig" ref="jedisGenericObjectPoolConfig" />
+		<constructor-arg name="host" value="127.0.0.1" />
+		<constructor-arg name="port" value="6379" />
+		<constructor-arg name="connectionTimeout" value="2000" />
+		<constructor-arg name="soTimeout" value="1000" />
+		<constructor-arg name="password"> <null/> </constructor-arg>
+		<constructor-arg name="database" value="0" />
+		<constructor-arg name="clientName"> <null/> </constructor-arg>
+		<constructor-arg name="ssl" value="false" />
+		<constructor-arg name="sslSocketFactory"> <null/> </constructor-arg>
+		<constructor-arg name="sslParameters"> <null/> </constructor-arg>
+		<constructor-arg name="hostnameVerifier"> <null/> </constructor-arg>
+		
+		<constructor-arg name="sslSocketFactory" ref="jedisGenericObjectPoolConfig" />
+		<constructor-arg name="sslParameters" ref="jedisGenericObjectPoolConfig" />
+		<constructor-arg name="hostnameVerifier" ref="jedisGenericObjectPoolConfig" />
+		
+	</bean> -->
+
+	<!-- the redis cluster -->
+	<bean class="com.liyingqiao.webflow.RedisManagement">
+		<constructor-arg name="jedisClusterNode" ref="jedisHostAndPorts" />
+		<constructor-arg name="connectionTimeout" value="2000" />
+		<constructor-arg name="soTimeout" value="1000" />
+		<constructor-arg name="maxAttempts" value="3" />
+		<constructor-arg name="password"> <null/> </constructor-arg>
+		<constructor-arg name="poolConfig" ref="jedisGenericObjectPoolConfig" />
+	</bean>
+
+	<!-- the redis cluster -->
+	<bean class="org.jasig.cas.jedis.RedisManagement">
+		<constructor-arg name="jedisClusterNode" ref="jedisHostAndPorts" />
+		<constructor-arg name="connectionTimeout" value="2000" />
+		<constructor-arg name="soTimeout" value="1000" />
+		<constructor-arg name="maxAttempts" value="3" />
+		<constructor-arg name="password"> <null/> </constructor-arg>
+		<constructor-arg name="poolConfig" ref="jedisGenericObjectPoolConfig" />
+	</bean>
+
+	<util:set id="jedisHostAndPorts">
+		<bean class="redis.clients.jedis.HostAndPort">
+			<constructor-arg name="host" value="172.20.53.139" />
+			<constructor-arg name="port" value="6389" />
+		</bean>
+		<bean class="redis.clients.jedis.HostAndPort">
+			<constructor-arg name="host" value="172.20.53.139" />
+			<constructor-arg name="port" value="6390" />
+		</bean>
+		<bean class="redis.clients.jedis.HostAndPort">
+			<constructor-arg name="host" value="172.20.53.139" />
+			<constructor-arg name="port" value="6391" />
+		</bean>
+	</util:set>
+
+</beans>
