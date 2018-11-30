@@ -28,17 +28,17 @@ public class MongoManagement {
 			connStr =  new ConnectionString(connectionString);
 		}
 		if (null == mongoClient) {
-			Block<ClusterSettings.Builder> blockCluster = (builder) -> {
+			Block<ClusterSettings.Builder> blockCluster = builder -> {
 				//ConnectionString connectionString = new ConnectionString("");
 				builder.applyConnectionString(connStr);
 				//builder.serverSelector(serverSelector);
 			}; 
-			Block<ConnectionPoolSettings.Builder> blockPool = (builder) -> {
+			Block<ConnectionPoolSettings.Builder> blockPool = builder -> {
 				builder.applyConnectionString(connStr);
 				//builder.maintenanceFrequency(maintenanceFrequency, timeUnit);
 				//builder.maintenanceInitialDelay(maintenanceInitialDelay, timeUnit);
 			};
-			Block<SocketSettings.Builder> blockSocket = (builder) -> {
+			Block<SocketSettings.Builder> blockSocket = builder -> {
 				builder.applyConnectionString(connStr);
 				builder.receiveBufferSize(0).sendBufferSize(0);
 			};
