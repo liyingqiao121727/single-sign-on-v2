@@ -11,7 +11,7 @@ Steps:
 
 3.modify the CAS clients login url (For example: When CAS client communicate with Apereo CAS(4.2), the login url You config is "http://cas_server_domain/cas?service=http://cas_client_domain/xxxxxxx", change the url by append "&mode=browser&subpath=login");
 
-4.new url contains 'service', 'mode' and 'subpath', 'service': the same function with Apereo CAS(4.2), 'mode': if mode = client, the CAS server will return json (may be contain some html tags, you can remove them easily), if mode != client, the CAS server will return to you the CAS client login page; 'subpath': the 'service' contains 'http://' and domainName and append '/' and append subpath is CAS client login page with http post.
+4.new url contains 'service', 'mode' and 'subpath', 'service': the same function with Apereo CAS(4.2), 'mode': if mode = client, the CAS server will return json (may be contain some html tags, you can remove them easily), if mode != client, the CAS server will return to you the CAS client login page; 'subpath': the 'service' contains 'http://' and domainName and append '/' and append subpath is CAS client login page with http post（why does use http post? get method need encode json data on url, post doesn't need）.
 
 5.The CAS server will request your login url with some request parameters (such as 'lt', 'execution', etc.). put them to login page in form. the form is needed:
 
