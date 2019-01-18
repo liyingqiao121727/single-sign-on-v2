@@ -50,7 +50,7 @@
 	</bean> -->
 
 	<!-- the redis cluster -->
-	<bean class="com.liyingqiao.webflow.RedisManagement">
+	<bean id="redisManagementLiyq" class="org.jasig.cas.jedis.RedisManagement">
 		<constructor-arg name="jedisClusterNode" ref="jedisHostAndPorts" />
 		<constructor-arg name="connectionTimeout" value="2000" />
 		<constructor-arg name="soTimeout" value="1000" />
@@ -60,7 +60,7 @@
 	</bean>
 
 	<!-- the redis cluster -->
-	<bean class="org.jasig.cas.jedis.RedisManagement">
+	<bean id="redisManagementCas" class="org.jasig.cas.jedis.RedisManagement">
 		<constructor-arg name="jedisClusterNode" ref="jedisHostAndPorts" />
 		<constructor-arg name="connectionTimeout" value="2000" />
 		<constructor-arg name="soTimeout" value="1000" />

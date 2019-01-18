@@ -24,6 +24,7 @@ import org.jasig.cas.CentralAuthenticationService;
 import org.jasig.cas.authentication.AuthenticationException;
 import org.jasig.cas.authentication.Credential;
 import org.jasig.cas.authentication.principal.Service;
+import org.jasig.cas.jedis.RedisManagement;
 import org.jasig.cas.ticket.TicketException;
 import org.jasig.cas.web.support.WebUtils;
 import org.springframework.util.StringUtils;
@@ -38,13 +39,18 @@ import org.springframework.webflow.execution.RequestContext;
  * @author Scott Battaglia
 
  * @since 3.0.4
+ * 
+ * Remark will delete by Liyingqiao
  */
-public abstract class AbstractNonInteractiveCredentialsAction extends
+public abstract class AbstractNonInteractiveCredentialsAction33 extends
     AbstractAction {
 
     /** Instance of CentralAuthenticationService. */
     @NotNull
     private CentralAuthenticationService centralAuthenticationService;
+    
+    @NotNull
+    private RedisManagement redisManagement;
 
     protected final boolean isRenewPresent(final RequestContext context) {
         return StringUtils.hasText(context.getRequestParameters().get("renew"));
@@ -83,7 +89,7 @@ public abstract class AbstractNonInteractiveCredentialsAction extends
 
         try {
             WebUtils.putTicketGrantingTicketInRequestScope(
-                context,
+            	redisManagement, context,
                 this.centralAuthenticationService
                     .createTicketGrantingTicket(credential));
             onSuccess(context, credential);
@@ -97,6 +103,10 @@ public abstract class AbstractNonInteractiveCredentialsAction extends
     public final void setCentralAuthenticationService(
         final CentralAuthenticationService centralAuthenticationService) {
         this.centralAuthenticationService = centralAuthenticationService;
+    }
+    
+    public final void setRedisManagement(RedisManagement redisManagement) {
+    	this.redisManagement = redisManagement;
     }
 
     /**

@@ -8,11 +8,10 @@ import java.io.Serializable;
 import java.util.Base64;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.jasig.cas.jedis.RedisManagement;
 import org.springframework.webflow.conversation.Conversation;
 import org.springframework.webflow.conversation.ConversationId;
 import org.springframework.webflow.conversation.ConversationLockException;
-
-import redis.clients.jedis.JedisCommands;
 
 public class LiyqConversation implements Conversation, Serializable {
 
@@ -26,9 +25,12 @@ public class LiyqConversation implements Conversation, Serializable {
 	private static int conversationTimeout;
 
 	private ConversationId id;
+	
+	private RedisManagement redisManagement;
 
-	public LiyqConversation(ConversationId id) {
+	public LiyqConversation(ConversationId id, RedisManagement redisManagement) {
 		this.id = id;
+		this.redisManagement = redisManagement;
 	}
 	
 	public static void setConversationTimeout(int conversationTimeout) {
@@ -50,10 +52,10 @@ public class LiyqConversation implements Conversation, Serializable {
 
 	@Override
 	public void end() {
-		JedisCommands jc = RedisManagement.getJedisCommands();
-		jc.del(PRE_KEY + this.id.toString());
 		try {
-			RedisManagement.close(jc);
+			redisManagement.operate((jc) -> {
+				return jc.del(PRE_KEY + this.id.toString());
+			});
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -75,13 +77,17 @@ public class LiyqConversation implements Conversation, Serializable {
 		}
 		Long timeout = (long) conversationTimeout;
 		String hashKey = PRE_KEY + id.toString();
-		JedisCommands jc = RedisManagement.getJedisCommands();
-		String value = jc.hget(hashKey, key);
-		timeout = jc.expire(hashKey, timeout.intValue());
+		String value = null;
+		final String fKey = key;
 		try {
-			RedisManagement.close(jc);
-		} catch (IOException e) {
-			e.printStackTrace();
+			value = redisManagement.operate((jc) -> {
+				String val = jc.hget(hashKey, fKey);
+				Long.valueOf(jc.expire(hashKey, timeout.intValue()));
+				return val;
+			});
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
 		}
 		if (null == value) {
 			return null;
@@ -115,14 +121,17 @@ public class LiyqConversation implements Conversation, Serializable {
 			return ;
 		}
 		
-		String hashKey = PRE_KEY + id.toString();
-		JedisCommands jc = RedisManagement.getJedisCommands();
-		Long timeout = jc.hset(hashKey, key, val);
-		timeout = (long) conversationTimeout;
-		timeout = jc.expire(hashKey, timeout.intValue());
+		final String hashKey = PRE_KEY + id.toString();
+		final String fKey = key;
+		final String fval = val;
 		try {
-			RedisManagement.close(jc);
+			redisManagement.operate((jc) -> {
+				Long timeout = jc.hset(hashKey, fKey, fval);
+				timeout = jc.expire(hashKey, conversationTimeout);
+				return timeout;
+			});
 		} catch (IOException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -133,11 +142,13 @@ public class LiyqConversation implements Conversation, Serializable {
 		if (null == key && null == (key = obj2String(name))) {
 			return ;
 		}
-		JedisCommands jc = RedisManagement.getJedisCommands();
-		jc.hdel(PRE_KEY + this.id.toString(), key);
+		final String fkey = key;
 		try {
-			RedisManagement.close(jc);
+			redisManagement.operate((jc) -> {
+				return jc.hdel(PRE_KEY + this.id.toString(), fkey);
+			});
 		} catch (IOException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

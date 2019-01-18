@@ -3,6 +3,7 @@ package com.liyingqiao.webflow;
 import java.io.Serializable;
 import java.util.UUID;
 
+import org.jasig.cas.jedis.RedisManagement;
 import org.springframework.webflow.conversation.Conversation;
 import org.springframework.webflow.conversation.ConversationException;
 import org.springframework.webflow.conversation.ConversationId;
@@ -16,10 +17,16 @@ public class LiyqConversationManager implements ConversationManager, Serializabl
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+	
+	private RedisManagement redisManagement;
+	
+	public LiyqConversationManager(RedisManagement redisManagement) {
+		this.redisManagement = redisManagement;
+	}
 
 	@Override
 	public Conversation beginConversation(ConversationParameters conversationParameters) throws ConversationException {
-		Conversation c = new LiyqConversation(new SimpleConversationId(UUID.randomUUID()));
+		Conversation c = new LiyqConversation(new SimpleConversationId(UUID.randomUUID()), redisManagement);
 		c.putAttribute("name", conversationParameters.getName());
 		c.putAttribute("caption", conversationParameters.getCaption());
 		c.putAttribute("description", conversationParameters.getDescription());
@@ -28,7 +35,7 @@ public class LiyqConversationManager implements ConversationManager, Serializabl
 
 	@Override
 	public Conversation getConversation(ConversationId id) throws ConversationException {
-		return new LiyqConversation(id);
+		return new LiyqConversation(id, redisManagement);
 	}
 
 	@Override

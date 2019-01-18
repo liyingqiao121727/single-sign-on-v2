@@ -23,6 +23,7 @@ import java.util.List;
 
 import javax.validation.constraints.NotNull;
 
+import org.jasig.cas.jedis.RedisManagement;
 import org.springframework.util.Assert;
 import org.springframework.webflow.context.servlet.FlowUrlHandler;
 import org.springframework.webflow.definition.registry.FlowDefinitionLocator;
@@ -51,12 +52,12 @@ public class SelectiveFlowHandlerAdapter extends FlowHandlerAdapter {
 	public SelectiveFlowHandlerAdapter() { }
 	
 	public SelectiveFlowHandlerAdapter(String supportedFlowId, FlowExecutor flowExecutor, 
-			FlowUrlHandler flowUrlHandler, int conversationTimeout, int snapshotTimeout) {
+			FlowUrlHandler flowUrlHandler, int conversationTimeout, int snapshotTimeout, RedisManagement redisManagement) {
 		super();
 		LiyqConversation.setConversationTimeout(conversationTimeout);
 		LiyqFlowExecutionSnapshotGroup.setSnapshotTimeout(snapshotTimeout);
 		
-		LiyqConversationManager conversationManager = new LiyqConversationManager();
+		LiyqConversationManager conversationManager = new LiyqConversationManager(redisManagement);
 		FlowExecutionImplFactory flowExecutionImplFactory = new FlowExecutionImplFactory();
 		FlowExecutionImplFactory flowExecutionFactory = new FlowExecutionImplFactory();
 		
@@ -67,7 +68,7 @@ public class SelectiveFlowHandlerAdapter extends FlowHandlerAdapter {
 
 				FlowDefinitionRegistryImpl flowDefinitionRegistryImpl = (FlowDefinitionRegistryImpl) locator;
 				SimpleFlowExecutionSnapshotFactory snapshotFactory = new SimpleFlowExecutionSnapshotFactory(flowExecutionImplFactory, flowDefinitionRegistryImpl);
-				LiyqFlowExecutionRepository flowExecutionRepository = new LiyqFlowExecutionRepository(conversationManager , snapshotFactory);
+				LiyqFlowExecutionRepository flowExecutionRepository = new LiyqFlowExecutionRepository(conversationManager, snapshotFactory, redisManagement);
 				
 				flowExecutionFactory.setExecutionKeyFactory(flowExecutionRepository);
 				flowExecutionImplFactory.setExecutionKeyFactory(flowExecutionRepository);

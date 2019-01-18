@@ -4,11 +4,10 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.UUID;
 
+import org.jasig.cas.jedis.RedisManagement;
 import org.springframework.webflow.execution.repository.impl.FlowExecutionSnapshotGroup;
 import org.springframework.webflow.execution.repository.snapshot.FlowExecutionSnapshot;
 import org.springframework.webflow.execution.repository.snapshot.SnapshotNotFoundException;
-
-import redis.clients.jedis.JedisCommands;
 
 public class LiyqFlowExecutionSnapshotGroup implements FlowExecutionSnapshotGroup, Serializable {
 	
@@ -18,6 +17,11 @@ public class LiyqFlowExecutionSnapshotGroup implements FlowExecutionSnapshotGrou
 	private static final long serialVersionUID = 1L;
 	private static final String PRE_KEY = "FlowExecutionSnapshot:";
 	private static int snapshotTimeout;
+	private RedisManagement redisManagement;
+	
+	public LiyqFlowExecutionSnapshotGroup(RedisManagement redisManagement) {
+		this.redisManagement = redisManagement;
+	}
 	
 	public static void setSnapshotTimeout(int snapshotTimeout) {
 		LiyqFlowExecutionSnapshotGroup.snapshotTimeout = snapshotTimeout;
@@ -30,20 +34,22 @@ public class LiyqFlowExecutionSnapshotGroup implements FlowExecutionSnapshotGrou
 		}
 		String key = PRE_KEY + snapshotId.toString();
 		Long timeout = (long) snapshotTimeout;
-		JedisCommands jc = RedisManagement.getJedisCommands();
-		String value = jc.get(key);
-		timeout = jc.expire(key, timeout.intValue());
+		String value = null;
 		try {
-			RedisManagement.close(jc);
-		} catch (IOException e) {
-			e.printStackTrace();
+			value = redisManagement.operate((jc) -> {
+				String val = jc.get(key);
+				Long.valueOf(jc.expire(key, timeout.intValue()));
+				return val;
+			});
+		} catch (IOException e1) {
+			e1.printStackTrace();
 		}
 		if (null == value) {
 			return null;
 		}
 		FlowExecutionSnapshot fes = null;
 		try {
-			fes = (FlowExecutionSnapshot) RedisManagement.strDeserialObj(value);
+			fes = (FlowExecutionSnapshot) redisManagement.strDeserialObj(value);
 		} catch (IOException | ClassNotFoundException e) {
 			e.printStackTrace();
 		}
@@ -58,7 +64,7 @@ public class LiyqFlowExecutionSnapshotGroup implements FlowExecutionSnapshotGrou
 		}
 		String value = null;
 		try {
-			value = RedisManagement.objSerialStr(snapshot);
+			value = redisManagement.objSerialStr(snapshot);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -66,13 +72,13 @@ public class LiyqFlowExecutionSnapshotGroup implements FlowExecutionSnapshotGrou
 			return;
 		}
 		String key = PRE_KEY + snapshotId.toString();
-		String ret = key;
-		Long timeout = (long) snapshotTimeout;
-		JedisCommands jc = RedisManagement.getJedisCommands();
-		ret = jc.set(ret, value);
-		timeout = jc.expire(key, timeout.intValue());
+		String fvalue = value;
 		try {
-			RedisManagement.close(jc);
+			redisManagement.operate((jc) -> {
+				String ret = jc.set(key, fvalue);
+				Long.valueOf(jc.expire(key, snapshotTimeout));
+				return ret;
+			});
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -85,10 +91,10 @@ public class LiyqFlowExecutionSnapshotGroup implements FlowExecutionSnapshotGrou
 
 	@Override
 	public void removeSnapshot(Serializable snapshotId) {
-		JedisCommands jc = RedisManagement.getJedisCommands();
-		jc.del(PRE_KEY + snapshotId.toString());
 		try {
-			RedisManagement.close(jc);
+			redisManagement.operate((jc) -> {
+				return jc.del(PRE_KEY + snapshotId.toString());
+			});
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

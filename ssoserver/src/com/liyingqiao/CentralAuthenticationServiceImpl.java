@@ -22,10 +22,11 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
+
 import javax.validation.constraints.NotNull;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.Block;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
@@ -458,10 +459,10 @@ public final class CentralAuthenticationServiceImpl implements CentralAuthentica
         	FindIterable<Document> result = collection.find(userRoleDoc);
         	
         	List<ObjectId> list = new LinkedList<ObjectId>();
-        	Block<? super Document> block = (doc) -> {
+        	Consumer<? super Document> consumer = (doc) -> {
         		list.add(doc.getObjectId("_id"));
         	};
-    		result.forEach(block);
+    		result.forEach(consumer);
         
             LinkedList<Bson> pipeline = new LinkedList<Bson>();
             pipeline.add(BsonDocument.parse("{$lookup:{from:'permission',localField: 'permission_id'," + 
@@ -478,7 +479,7 @@ public final class CentralAuthenticationServiceImpl implements CentralAuthentica
     		//target.add(userDoc);
     		AggregateIterable<Document> iterator = MongoManagement.getMongoClient().getDatabase("sso_user")
     		.getCollection("role_permission").aggregate(pipeline);
-    		Block<? super Document> element = (doc) -> {
+    		Consumer<? super Document> element = (doc) -> {
     			target.append(doc.toJson()).append(',');
     		};
 			iterator.forEach(element);

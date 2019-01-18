@@ -24,7 +24,6 @@ import org.jasig.cas.ticket.TicketGrantingTicket;
 import org.jasig.cas.ticket.registry.AbstractTicketRegistry;
 import org.springframework.util.Assert;
 
-import redis.clients.jedis.JedisCommands;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -42,13 +41,16 @@ public final class DefaultTicketRegistry extends AbstractTicketRegistry  {
 
 	/** A HashMap to contain the tickets.*/
 	//private final Map<String, Ticket> cache;
-	
+
 	private int stTimeout;
-	
+
 	private int tgtTimeout;
 
-	public DefaultTicketRegistry() {
+	private RedisManagement redisManagement;
+
+	public DefaultTicketRegistry(RedisManagement redisManagement) {
 		//this.cache = new ConcurrentHashMap<String, Ticket>();
+		this.redisManagement = redisManagement;
 	}
 
 	/**
@@ -67,11 +69,11 @@ public final class DefaultTicketRegistry extends AbstractTicketRegistry  {
 	/*public DefaultTicketRegistry(final int initialCapacity, final float loadFactor, final int concurrencyLevel) {
 		//this.cache = new ConcurrentHashMap<String, Ticket>(initialCapacity, loadFactor, concurrencyLevel);
 	}*/
-	
+
 	public void setStTimeout(int stTimeout) {
 		this.stTimeout = stTimeout;
 	}
-	
+
 	public void settgtTimeout(int tgtTimeout) {
 		this.tgtTimeout = tgtTimeout;
 	}
@@ -88,7 +90,7 @@ public final class DefaultTicketRegistry extends AbstractTicketRegistry  {
 
 		String value = null;
 		try {
-			value = RedisManagement.objSerialStr(ticket);
+			value = redisManagement.objSerialStr(ticket);
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
@@ -97,11 +99,13 @@ public final class DefaultTicketRegistry extends AbstractTicketRegistry  {
 		}
 		Long timeout = ticket instanceof TicketGrantingTicket 
 				? (long) this.tgtTimeout : (long) this.stTimeout;
-		JedisCommands jc = RedisManagement.getJedisCommands();
+		final String fValue = value;
 		try  {
-			value = jc.set(ticket.getId(), value);
-			timeout = jc.expire(ticket.getId(), timeout.intValue());
-			RedisManagement.close(jc);
+			redisManagement.operate((jedisCmd) -> {
+				String s = jedisCmd.set(ticket.getId(), fValue);
+				Long.valueOf(jedisCmd.expire(ticket.getId(), timeout.intValue()));
+				return s;
+			});
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -115,15 +119,17 @@ public final class DefaultTicketRegistry extends AbstractTicketRegistry  {
 		logger.debug("Attempting to retrieve ticket [{}]", ticketId);
 		Long timeout = ticketId.startsWith(TicketGrantingTicket.PREFIX) 
 				? (long) this.tgtTimeout : (long) this.stTimeout;
-		JedisCommands jc = RedisManagement.getJedisCommands();
-		String ticketStr = jc.get(ticketId);
-		timeout = jc.expire(ticketId, timeout.intValue());
+		String ticketStr = null;
 		try {
-			RedisManagement.close(jc);
-		} catch (Exception e1) {
+			ticketStr = redisManagement.operate((jedisCmd) -> {
+				String value = jedisCmd.get(ticketId);
+				Long.valueOf(jedisCmd.expire(ticketId, timeout.intValue()));
+				return value;
+			});
+		} catch (IOException e1) {
 			e1.printStackTrace();
 		}
-		
+
 		if (null == ticketStr) {
 			return null;
 		}
@@ -147,10 +153,11 @@ public final class DefaultTicketRegistry extends AbstractTicketRegistry  {
 		if (ticketId == null) {
 			return false;
 		}
-		JedisCommands jc = RedisManagement.getJedisCommands();
-		boolean result = jc.del(ticketId) > 0;
+		boolean result = false;
 		try {
-			RedisManagement.close(jc);
+			result = redisManagement.operate((jedisCmd) -> {
+				return jedisCmd.del(ticketId) > 0;
+			});
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

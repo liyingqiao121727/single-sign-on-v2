@@ -31,8 +31,6 @@ import org.springframework.util.Assert;
 import org.springframework.webflow.context.servlet.ServletExternalContext;
 import org.springframework.webflow.execution.RequestContext;
 
-import redis.clients.jedis.JedisCommands;
-
 /**
  * Common utilities for the web tier.
  *
@@ -94,19 +92,27 @@ public final class WebUtils {
         return (WebApplicationService) context.getFlowScope().get("service");
     }
 
-    public static void putTicketGrantingTicketInRequestScope(
+    public static void putTicketGrantingTicketInRequestScope(RedisManagement redisManagement, 
         final RequestContext context, final String ticketValue) {
         context.getRequestScope().put("ticketGrantingTicketId", ticketValue);
-        setRedis(context, ticketValue);
+        try {
+			setRedis(redisManagement, context, ticketValue);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
     }
 
-    public static void putTicketGrantingTicketInFlowScope(
+    public static void putTicketGrantingTicketInFlowScope(RedisManagement redisManagement, 
         final RequestContext context, final String ticketValue) {
         context.getFlowScope().put("ticketGrantingTicketId", ticketValue);
-        setRedis(context, ticketValue);
+        try {
+			setRedis(redisManagement, context, ticketValue);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
     }
     
-    private static void setRedis(final RequestContext context, String ticketValue) {
+    private static void setRedis(RedisManagement redisManagement, final RequestContext context, String ticketValue) throws IOException {
     	HttpServletRequest request = getHttpServletRequest(context);
         if (null == request) {
 			return ;
@@ -119,14 +125,11 @@ public final class WebUtils {
 			}
 			sessionId = session.getId();
 		}
+		final String ssid = sessionId;
 		
-		JedisCommands jedisCommands = RedisManagement.getJedisCommands();
-		jedisCommands.set(sessionId, ticketValue);
-		try {
-			RedisManagement.close(jedisCommands);
-		} catch (IOException e) {
-			//e.printStackTrace();
-		}
+		redisManagement.operate((jedisCmd) -> {
+			return jedisCmd.set(ssid, ticketValue);
+		});
     }
 
     public static String getTicketGrantingTicketId(
@@ -139,26 +142,6 @@ public final class WebUtils {
 		if (null != ticket) {
 			return ticket;
 		}
-		/*HttpServletRequest request = getHttpServletRequest(context);
-		if (null == request) {
-			return null;
-		}
-		String sessionId = request.getRequestedSessionId();
-		if (null == sessionId) {
-			HttpSession session = request.getSession(false);
-			if (session == null) {
-				return null;
-			}
-			sessionId = session.getId();
-		}
-		
-		JedisCommands jedisCommands = RedisManagement.getJedisCommands();
-		ticket = jedisCommands.get(sessionId);
-		try {
-			RedisManagement.close(jedisCommands);
-		} catch (IOException e) {
-			//e.printStackTrace();
-		}*/
 		
         return ticket;
     }

@@ -2,6 +2,7 @@ package com.liyingqiao.webflow;
 
 import java.io.Serializable;
 
+import org.jasig.cas.jedis.RedisManagement;
 import org.springframework.util.StringUtils;
 import org.springframework.webflow.conversation.Conversation;
 import org.springframework.webflow.conversation.ConversationManager;
@@ -21,15 +22,17 @@ public class LiyqFlowExecutionRepository extends DefaultFlowExecutionRepository 
 	 */
 	private static final long serialVersionUID = 1L;
 	private static final String SNAPSHOT_GROUP_ATTRIBUTE = "flowExecutionSnapshotGroup";
+	private RedisManagement redisManagement;
 	
 	public LiyqFlowExecutionRepository(ConversationManager conversationManager,
-			FlowExecutionSnapshotFactory snapshotFactory) {
+			FlowExecutionSnapshotFactory snapshotFactory, RedisManagement redisManagement) {
 		super(conversationManager, snapshotFactory);
+		this.redisManagement = redisManagement;
 	}
 	
 	@Override
 	protected FlowExecutionSnapshotGroup createFlowExecutionSnapshotGroup() {
-		return new LiyqFlowExecutionSnapshotGroup();
+		return new LiyqFlowExecutionSnapshotGroup(redisManagement);
 	}
 
 	/**
@@ -42,7 +45,7 @@ public class LiyqFlowExecutionRepository extends DefaultFlowExecutionRepository 
 		FlowExecutionSnapshotGroup group = (FlowExecutionSnapshotGroup) conversation
 				.getAttribute(SNAPSHOT_GROUP_ATTRIBUTE);
 		if (group == null) {
-			group = new LiyqFlowExecutionSnapshotGroup();
+			group = new LiyqFlowExecutionSnapshotGroup(redisManagement);
 			conversation.putAttribute(SNAPSHOT_GROUP_ATTRIBUTE, group);
 		}
 		return group;

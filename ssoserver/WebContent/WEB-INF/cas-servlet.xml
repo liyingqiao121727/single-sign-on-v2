@@ -120,6 +120,7 @@
 		<constructor-arg index="2" ref="loginFlowUrlHandler" />
 		<constructor-arg index="3" value="300" />
 		<constructor-arg index="4" value="300" />
+		<constructor-arg index="5" ref="redisManagementLiyq" />
   </bean>
 
   <bean id="logoutHandlerAdapter" class="org.jasig.cas.web.flow.SelectiveFlowHandlerAdapter" >
@@ -128,6 +129,7 @@
 		<constructor-arg index="2" ref="logoutFlowUrlHandler" />
 		<constructor-arg index="3" value="300" />
 		<constructor-arg index="4" value="300" />
+		<constructor-arg index="5" ref="redisManagementLiyq" />
   </bean>
 
   <bean id="loginFlowUrlHandler" class="org.jasig.cas.web.flow.CasDefaultFlowUrlHandler" />
@@ -275,7 +277,8 @@
   <bean id="authenticationViaFormAction" class="org.jasig.cas.web.flow.AuthenticationViaFormAction"
         p:centralAuthenticationService-ref="centralAuthenticationService"
         p:warnCookieGenerator-ref="warnCookieGenerator"
-        p:ticketRegistry-ref="ticketRegistry"/>
+        p:ticketRegistry-ref="ticketRegistry"
+        p:redisManagement="redisManagementCas"/>
   
   <bean id="healthCheckController" class="org.jasig.cas.web.HealthCheckController"
         p:healthCheckMonitor-ref="healthCheckMonitor"/>

@@ -107,6 +107,24 @@
     </init-param>
     <load-on-startup>1</load-on-startup>
   </servlet>
+  
+  <listener>
+    <listener-class>
+      com.liyingqiao.PrometheusServletContextListener
+    </listener-class>
+  </listener>
+  
+  <servlet>
+    <servlet-name>metricsServlet</servlet-name>
+    <servlet-class>
+      io.prometheus.client.exporter.MetricsServlet
+    </servlet-class>
+  </servlet>
+	
+  <servlet-mapping>
+    <servlet-name>metricsServlet</servlet-name>
+    <url-pattern>/metrics</url-pattern>
+  </servlet-mapping>
 	
   <servlet-mapping>
     <servlet-name>cas</servlet-name>

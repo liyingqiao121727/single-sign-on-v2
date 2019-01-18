@@ -1,7 +1,9 @@
 package org.jasig.cas.jedis;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Base64;
 import java.util.Set;
@@ -11,7 +13,6 @@ import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocketFactory;
 
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
-
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisCluster;
@@ -20,9 +21,9 @@ import redis.clients.jedis.JedisPool;
 
 public class RedisManagement {
 
-	private static JedisCluster jc = null;
+	private JedisCluster jc = null;
 
-	private static JedisPool jedisPool = null;
+	private JedisPool jedisPool = null;
 
 	//spring instance it only
 	//redis cluster
@@ -54,22 +55,44 @@ public class RedisManagement {
 		return jedisPool.getResource();
 	}*/
 
-	public static JedisCommands getJedisCommands() {
+	/*private JedisCommands getJedisCommands() {
 		return jc == null ? jedisPool.getResource() : jc;
+	}*/
+
+	public <T> T operate(RedisOperate<T> redisOpr) throws IOException {
+		T t = null;
+		if (jc != null) {
+			t = redisOpr.operate(jc);
+		} else {
+			Jedis jedis = jedisPool.getResource();
+			t = redisOpr.operate(jedis);
+			jedis.close();
+		}
+
+		return t;
 	}
 
-	public static void close(JedisCommands jedisCmd) throws IOException {
+	/*private void close(JedisCommands jedisCmd) throws IOException {
 		if (jedisCmd instanceof Jedis) {
 			((Jedis) jedisCmd).close();
 		}
+	}*/
+
+	public String objSerialStr(Object obj) throws IOException {
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		ObjectOutputStream oos = new ObjectOutputStream(baos);
+		oos.writeObject(obj);
+		return Base64.getEncoder().encodeToString(baos.toByteArray());
 	}
 
-	public static String objSerialStr(Object obj) throws IOException {
-		try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-				ObjectOutputStream oos = new ObjectOutputStream(baos); ) {
-			oos.writeObject(obj);
-			return Base64.getEncoder().encodeToString(baos.toByteArray());
-		}
+	public Object strDeserialObj(String value) throws IOException, ClassNotFoundException {
+		ByteArrayInputStream in = new ByteArrayInputStream(Base64.getDecoder().decode(value));
+		ObjectInputStream oin = new ObjectInputStream(in);
+		return oin.readObject();
+	}
+
+	public static interface RedisOperate<T> {
+		T operate(JedisCommands jedisCmd);
 	}
 
 }

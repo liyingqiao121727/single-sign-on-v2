@@ -132,5 +132,11 @@ public class Test {
 		Byte[] b = {};
 		Object[] o = b;
 		System.out.println(o);
+		//DefaultExports.initialize();
+		/*io.prometheus.client.filter.MetricsFilter mf = null;
+		io.prometheus.client.exporter.MetricsServlet ms = null;
+		io.prometheus.
+		DefaultExports.initialize();*/
+		
 	}
 }

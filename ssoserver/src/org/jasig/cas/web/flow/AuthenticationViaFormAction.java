@@ -28,6 +28,7 @@ import org.jasig.cas.authentication.AuthenticationException;
 import org.jasig.cas.authentication.Credential;
 import org.jasig.cas.authentication.HandlerResult;
 import org.jasig.cas.authentication.principal.Service;
+import org.jasig.cas.jedis.RedisManagement;
 import org.jasig.cas.ticket.TicketCreationException;
 import org.jasig.cas.ticket.TicketException;
 import org.jasig.cas.ticket.TicketGrantingTicket;
@@ -85,6 +86,9 @@ public class AuthenticationViaFormAction {
 	@NotNull
 	private CookieGenerator warnCookieGenerator;
 
+	@NotNull
+	private RedisManagement redisManagement;
+
 	/** Flag indicating whether message context contains warning messages. */
 	private boolean hasWarningMessages;
 
@@ -134,7 +138,7 @@ public class AuthenticationViaFormAction {
 
 		try {
 			final String tgtId = this.centralAuthenticationService.createTicketGrantingTicket(credential);
-			WebUtils.putTicketGrantingTicketInFlowScope(context, tgtId);
+			WebUtils.putTicketGrantingTicketInFlowScope(redisManagement, context, tgtId);
 			putWarnCookieIfRequestParameterPresent(context);
 			final TicketGrantingTicket tgt = (TicketGrantingTicket) this.ticketRegistry.getTicket(tgtId);
 			for (final Map.Entry<String, HandlerResult> entry : tgt.getAuthentication().getSuccesses().entrySet()) {
